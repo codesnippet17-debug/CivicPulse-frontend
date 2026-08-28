@@ -1,0 +1,3 @@
+export type IssueCategory = "pothole" | "garbage" | "streetlight" | "obstruction" | "waterlogging";
+export type IssueStatus = "REPORTED" | "AI_ANALYZED" | "VERIFIED" | "ASSIGNED" | "IN_PROGRESS" | "RESOLVED" | "RESOLUTION_VERIFIED" | "CLOSED";
+export interface CivicIssue { id: string; category: IssueCategory; description?: string; imageUrl: string; lat: number; lng: number; address?: string; severity: number; confidence: number; priority: number; reportCount: number; uniqueReporterCount?: number; status: IssueStatus; isDuplicate?: boolean; parentIssueId?: string | null; createdAt: string; updatedAt: string; assignedTeam?: string | null; aiSummary?: string; resolution?: { afterImageUrl?: string; verificationScore?: number; citizenConfirmed?: boolean } }
