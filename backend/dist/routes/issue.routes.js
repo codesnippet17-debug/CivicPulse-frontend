@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const issue_controller_js_1 = require("../controllers/issue.controller.js");
+const async_handler_js_1 = require("../utils/async-handler.js");
+const router = (0, express_1.Router)();
+router.get("/", (0, async_handler_js_1.asyncHandler)(issue_controller_js_1.listIssues));
+router.post("/", (0, async_handler_js_1.asyncHandler)(issue_controller_js_1.createIssue));
+router.get("/:publicId", (0, async_handler_js_1.asyncHandler)(issue_controller_js_1.getIssue));
+router.patch("/:publicId", (0, async_handler_js_1.asyncHandler)(issue_controller_js_1.updateIssue));
+router.post("/:publicId/resolution", (0, async_handler_js_1.asyncHandler)(issue_controller_js_1.resolveIssue));
+exports.default = router;

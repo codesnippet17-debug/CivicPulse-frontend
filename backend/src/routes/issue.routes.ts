@@ -1,0 +1,10 @@
+import { Router } from "express";
+import { createIssue, getIssue, listIssues, resolveIssue, updateIssue } from "../controllers/issue.controller.js";
+import { asyncHandler } from "../utils/async-handler.js";
+const router = Router();
+router.get("/", asyncHandler(listIssues));
+router.post("/", asyncHandler(createIssue));
+router.get("/:publicId", asyncHandler(getIssue));
+router.patch("/:publicId", asyncHandler(updateIssue));
+router.post("/:publicId/resolution", asyncHandler(resolveIssue));
+export default router;

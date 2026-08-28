@@ -15,6 +15,7 @@ import {
   Camera,
 } from "lucide-react";
 import { Navbar } from "@/components/ui";
+import { submitIssue } from "@/lib/api-client";
 
 export default function ReportPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -52,10 +53,8 @@ export default function ReportPage() {
     setAnalysis(true);
     setError("");
     try {
-      const response = await fetch("/api/issues", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, imageUrl, lat: 28.6139, lng: 77.209, address: "Outer Ring Road, Sector 15", description: note || undefined }) });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Your report could not be submitted.");
-      setIssueId(payload.issue.id);
+      const payload = await submitIssue({ file: file!, category, latitude: 28.6139, longitude: 77.209, address: "Outer Ring Road, Sector 15", description: note || undefined });
+      setIssueId(payload.data?.publicId ?? payload.issue.id);
       setTimeout(() => setDone(true), 700);
     } catch (submissionError) { setError(submissionError instanceof Error ? submissionError.message : "Your report could not be submitted."); setAnalysis(false); }
   };

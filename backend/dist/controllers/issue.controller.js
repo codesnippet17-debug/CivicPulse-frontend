@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveIssue = exports.updateIssue = exports.createIssue = exports.getIssue = exports.listIssues = void 0;
+const issue_service_js_1 = require("../services/issue.service.js");
+const issue_validator_js_1 = require("../validators/issue.validator.js");
+const listIssues = async (req, res) => { const result = await issue_service_js_1.issueService.list(issue_validator_js_1.listIssuesSchema.parse(req.query)); res.json({ data: result.issues, meta: result.meta }); };
+exports.listIssues = listIssues;
+const getIssue = async (req, res) => { res.json({ data: await issue_service_js_1.issueService.get(req.params.publicId) }); };
+exports.getIssue = getIssue;
+const createIssue = async (req, res) => { const issue = await issue_service_js_1.issueService.create(issue_validator_js_1.createIssueSchema.parse(req.body)); res.status(201).location(`/api/v1/issues/${issue.publicId}`).json({ data: issue }); };
+exports.createIssue = createIssue;
+const updateIssue = async (req, res) => { const issue = await issue_service_js_1.issueService.update(req.params.publicId, issue_validator_js_1.updateIssueSchema.parse(req.body)); res.json({ data: issue }); };
+exports.updateIssue = updateIssue;
+const resolveIssue = async (req, res) => { const issue = await issue_service_js_1.issueService.resolve(req.params.publicId, issue_validator_js_1.resolveIssueSchema.parse(req.body)); res.json({ data: issue }); };
+exports.resolveIssue = resolveIssue;

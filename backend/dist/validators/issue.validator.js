@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveIssueSchema = exports.updateIssueSchema = exports.listIssuesSchema = exports.createIssueSchema = void 0;
+const zod_1 = require("zod");
+const categories = ["POTHOLE", "GARBAGE", "STREETLIGHT", "OBSTRUCTION", "WATERLOGGING"];
+const statuses = ["REPORTED", "AI_ANALYZED", "VERIFIED", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "RESOLUTION_VERIFIED", "CLOSED"];
+const coordinate = zod_1.z.number().finite();
+exports.createIssueSchema = zod_1.z.object({ category: zod_1.z.enum(categories), imageUrl: zod_1.z.string().url().max(2048), latitude: coordinate.min(-90).max(90), longitude: coordinate.min(-180).max(180), address: zod_1.z.string().trim().min(3).max(180).optional(), description: zod_1.z.string().trim().max(1000).optional() });
+exports.listIssuesSchema = zod_1.z.object({ category: zod_1.z.enum(categories).optional(), status: zod_1.z.enum(statuses).optional(), minSeverity: zod_1.z.coerce.number().min(0).max(10).optional(), limit: zod_1.z.coerce.number().int().min(1).max(100).default(50), page: zod_1.z.coerce.number().int().min(1).default(1) });
+exports.updateIssueSchema = zod_1.z.object({ status: zod_1.z.enum(statuses).optional(), assignedTeam: zod_1.z.string().trim().min(2).max(100).nullable().optional(), note: zod_1.z.string().trim().max(500).optional() }).refine((data) => data.status !== undefined || data.assignedTeam !== undefined, "At least one change is required");
+exports.resolveIssueSchema = zod_1.z.object({ afterImageUrl: zod_1.z.string().url().max(2048).optional(), verificationScore: zod_1.z.number().int().min(0).max(100).optional(), citizenConfirmed: zod_1.z.boolean().optional() });

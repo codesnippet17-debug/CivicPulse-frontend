@@ -1,0 +1,15 @@
+import { IssueCategory, IssueStatus, Prisma } from "@prisma/client";
+import { prisma } from "../lib/prisma.js";
+import { AppError } from "../utils/app-error.js";
+import { CreateIssueInput } from "../validators/issue.validator.js";
+import { estimateIssue } from "./ai.service.js";
+
+const include = { statusEvents: { orderBy: { createdAt: "asc" } }, resolution: true, _count: { select: { reports: true } } } satisfies Prisma.IssueInclude;
+export class IssueService {
+  async list(filters: { category?: IssueCategory; status?: IssueStatus; minSeverity?: number; limit: number; page: number }) { const where: Prisma.IssueWhereInput = { ...(filters.category && { category: filters.category }), ...(filters.status && { status: filters.status }), ...(filters.minSeverity !== undefined && { severity: { gte: filters.minSeverity } }) }; const [issues, total] = await prisma.$transaction([prisma.issue.findMany({ where, orderBy: [{ priority: "desc" }, { createdAt: "desc" }], skip: (filters.page - 1) * filters.limit, take: filters.limit, include }), prisma.issue.count({ where })]); return { issues, meta: { total, page: filters.page, limit: filters.limit, totalPages: Math.ceil(total / filters.limit) } }; }
+  async get(publicId: string) { const issue = await prisma.issue.findUnique({ where: { publicId }, include }); if (!issue) throw new AppError(404, "Civic issue not found"); return issue; }
+  async create(input: CreateIssueInput) { const category = input.category as IssueCategory; const analysis = estimateIssue(category); const total = await prisma.issue.count(); const publicId = `CIV-${String(1001 + total).padStart(4, "0")}`; return prisma.issue.create({ data: { publicId, category, imageUrl: input.imageUrl, latitude: input.latitude, longitude: input.longitude, address: input.address, description: input.description, ...analysis, status: "AI_ANALYZED", reports: { create: { imageUrl: input.imageUrl, note: input.description, latitude: input.latitude, longitude: input.longitude } }, statusEvents: { create: [{ status: "REPORTED", actor: "citizen", note: "Issue submitted by citizen" }, { status: "AI_ANALYZED", actor: "system", note: "AI-assisted preliminary assessment created" }] } }, include }); }
+  async update(publicId: string, change: { status?: IssueStatus; assignedTeam?: string | null; note?: string }) { await this.get(publicId); return prisma.issue.update({ where: { publicId }, data: { ...(change.assignedTeam !== undefined && { assignedTeam: change.assignedTeam }), ...(change.status && { status: change.status, statusEvents: { create: { status: change.status, note: change.note, actor: "operations" } } }) }, include }); }
+  async resolve(publicId: string, resolution: { afterImageUrl?: string; verificationScore?: number; citizenConfirmed?: boolean }) { await this.get(publicId); return prisma.issue.update({ where: { publicId }, data: { status: "RESOLVED", resolution: { upsert: { create: resolution, update: resolution } }, statusEvents: { create: { status: "RESOLVED", actor: "operations", note: "Resolution evidence recorded" } } }, include }); }
+}
+export const issueService = new IssueService();

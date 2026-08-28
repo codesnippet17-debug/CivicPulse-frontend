@@ -1,0 +1,27 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.app = void 0;
+const cors_1 = __importDefault(require("cors"));
+const express_1 = __importDefault(require("express"));
+const helmet_1 = __importDefault(require("helmet"));
+const morgan_1 = __importDefault(require("morgan"));
+const env_js_1 = require("./config/env.js");
+const error_handler_js_1 = require("./middleware/error-handler.js");
+const request_id_js_1 = require("./middleware/request-id.js");
+const issue_routes_js_1 = __importDefault(require("./routes/issue.routes.js"));
+const upload_routes_js_1 = __importDefault(require("./routes/upload.routes.js"));
+exports.app = (0, express_1.default)();
+exports.app.use(request_id_js_1.requestId);
+exports.app.use((0, helmet_1.default)());
+exports.app.use((0, cors_1.default)({ origin: env_js_1.env.frontendUrl, methods: ["GET", "POST", "PATCH"], allowedHeaders: ["Content-Type", "Authorization"] }));
+exports.app.use(express_1.default.json({ limit: "8mb" }));
+exports.app.use((0, morgan_1.default)(":method :url :status :response-time ms"));
+exports.app.get("/health", (_req, res) => res.json({ status: "ok", service: "civicpulse-api", timestamp: new Date().toISOString() }));
+exports.app.use("/uploads", express_1.default.static("uploads"));
+exports.app.use("/api/v1/uploads", upload_routes_js_1.default);
+exports.app.use("/api/v1/issues", issue_routes_js_1.default);
+exports.app.use(error_handler_js_1.notFound);
+exports.app.use(error_handler_js_1.errorHandler);

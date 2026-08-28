@@ -1,0 +1,64 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+
+enum IssueCategory { POTHOLE GARBAGE STREETLIGHT OBSTRUCTION WATERLOGGING }
+enum IssueStatus { REPORTED AI_ANALYZED VERIFIED ASSIGNED IN_PROGRESS RESOLVED RESOLUTION_VERIFIED CLOSED }
+
+model Issue {
+  id                    String        @id @default(cuid())
+  publicId              String        @unique
+  category              IssueCategory
+  description           String?
+  imageUrl              String
+  latitude              Float
+  longitude             Float
+  address               String?
+  severity              Float?
+  confidence            Int?
+  priority              Int?
+  reportCount           Int           @default(1)
+  uniqueReporterCount   Int           @default(1)
+  status                IssueStatus   @default(REPORTED)
+  assignedTeam          String?
+  aiSummary             String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  reports               Report[]
+  statusEvents          StatusEvent[]
+  resolution            Resolution?
+
+  @@index([status])
+  @@index([category])
+  @@index([latitude, longitude])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  issueId   String
+  imageUrl  String
+  note      String?
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model StatusEvent {
+  id        String      @id @default(cuid())
+  issueId   String
+  status    IssueStatus
+  note      String?
+  actor     String       @default("system")
+  createdAt DateTime     @default(now())
+  issue     Issue        @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model Resolution {
+  id                    String   @id @default(cuid())
+  issueId               String   @unique
+  afterImageUrl         String?
+  verificationScore     Int?
+  citizenConfirmed      Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  issue                 Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
